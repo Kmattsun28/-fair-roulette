@@ -93,19 +93,30 @@
             pointer-events: none;
             opacity: 0.7;
         }
+        /* 秘密のボタンが背景色に溶け込む状態 - 完全な透明に変更 */
+        .blended-hidden-color {
+            background-color: transparent !important;
+            border-color: transparent !important;
+            color: transparent !important; /* テキストも透明にする */
+            box-shadow: none !important; /* 影をなくす */
+            pointer-events: auto !important; /* クリック可能にする */
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-blue-100 to-indigo-200">
     <!-- アプリ全体を囲むコンテナ -->
     <div class="app-container">
         <h1 id="rouletteTitle" class="text-4xl font-extrabold text-gray-800 mb-8 text-center drop-shadow-md cursor-pointer select-none">ウェブルーレット</h1>
+        
+        <!-- 隠しボタンを回す/リセットボタンの上に配置 -->
+        <div id="hiddenToggleButton" class="w-full h-10 -mt-8 mb-4 cursor-pointer blended-hidden-color"></div>
+
         <div class="relative mb-8">
             <canvas id="rouletteCanvas"></canvas>
             <!-- ルーレットの針 -->
             <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-[100%] -mt-2 w-0 h-0 border-l-[15px] border-l-transparent border-r-[15px] border-r-transparent border-b-[30px] border-b-red-600 z-10"></div>
         </div>
         <div class="flex space-x-4 mb-6">
-            <button id="showSecretButton" class="btn btn-secondary btn-small" style="background-color: #bfdbfe; color: #bfdbfe; border: none; min-width: 40px; min-height: 40px; padding: 0;">●</button>
             <button id="spinButton" class="btn btn-primary">回す</button>
             <button id="resetButton" class="btn btn-secondary">リセット</button>
         </div>
@@ -121,7 +132,8 @@
             
             <!-- 秘密のボタンと当たる項目選択 (初期状態で非表示) -->
             <div id="secretControlsContainer" class="mb-4 flex items-center justify-between hidden">
-                <button id="toggleSecretModeButton" class="text-sm text-gray-500 hover:text-blue-600">Special Mode: OFF</button>
+                <!-- toggleSecretModeButton はここに戻す -->
+                <button id="toggleSecretModeButton" class="text-sm font-bold transition-colors duration-300 ease-in-out">Special Mode: OFF</button>
                 <div class="flex items-center space-x-2">
                     <label class="text-gray-700 text-sm whitespace-nowrap">当たる項目:</label>
                     <!-- selectタグをdivに変更し、カスタムの選択リストを構築 -->
@@ -172,10 +184,11 @@
         const removeSegmentButton = document.getElementById('removeSegmentButton');
         const applySegmentsButton = document.getElementById('applySegmentsButton');
         const toggleSecretModeButton = document.getElementById('toggleSecretModeButton'); // 秘密のボタン
-        const showSecretButton = document.getElementById('showSecretButton');
         // 複数選択のためのカスタムコンテナ要素への参照
         const winningSegmentsOptionsContainer = document.getElementById('winningSegmentsOptionsContainer'); 
         const rouletteTitle = document.getElementById('rouletteTitle'); // タイトル要素
+        const secretControlsContainer = document.getElementById('secretControlsContainer'); // 秘密のコントロールを格納するコンテナ
+        const hiddenToggleButton = document.getElementById('hiddenToggleButton'); // 新しい隠しボタン
 
         // ルーレットのセグメントを定義 (初期値 - これらは項目入力フィールドの初期表示に使われます)
         const initialSegmentTexts = [
@@ -346,7 +359,7 @@
             spinButton.disabled = false; // ボタンを再度有効にする
             resetButton.disabled = false; // ボタンを再度有効にする
             applySegmentsButton.disabled = false; // セグメント適用ボタンを有効にする
-            winningSegmentsOptionsContainer.classList.remove('disabled-overlay'); // ドロップダウンを有効にする
+            winningSegmentsOptionsContainer.classList.remove('disabled-overlay'); // 当たる項目選択を有効にする
         }
 
         // ルーレットを回す関数
@@ -358,7 +371,7 @@
             spinButton.disabled = true; // スピン中はボタンを無効にする
             resetButton.disabled = true; // スピン中はリセットボタンを無効にする
             applySegmentsButton.disabled = true; // セグメント適用ボタンも無効にする
-            winningSegmentsOptionsContainer.classList.add('disabled-overlay'); // ドロップダウンを無効にする
+            winningSegmentsOptionsContainer.classList.add('disabled-overlay'); // 当たる項目選択を無効にする
 
             // 結果表示エリアをクリア
             rouletteResultDisplay.textContent = ''; 
@@ -442,7 +455,7 @@
             spinButton.disabled = false; // ボタンを有効にする
             resetButton.disabled = false; // ボタンを有効にする
             applySegmentsButton.disabled = false; // セグメント適用ボタンも有効にする
-            winningSegmentsOptionsContainer.classList.remove('disabled-overlay'); // ドロップダウンを有効にする
+            winningSegmentsOptionsContainer.classList.remove('disabled-overlay'); // 当たる項目選択を有効にする
             hideMessageBox(); // エラー表示用メッセージボックスを隠す
             rouletteResultDisplay.textContent = ''; // 結果表示エリアをクリア
         }
@@ -564,24 +577,26 @@
             }
         }
 
-        // スペシャルモードボタンのテキストを更新するヘルパー関数
+        // スペシャルモードボタンのテキストと色を更新するヘルパー関数
         function updateSecretModeButtonText() {
+            // まず既存の色クラスを削除
+            toggleSecretModeButton.classList.remove('text-gray-500', 'text-green-600');
+
+            // テキストコンテンツの更新
             if (isSpecialModeActive) {
                 const selectedCount = selectedWinningSegmentIndices.length;
                 if (selectedCount === 0) {
-                    toggleSecretModeButton.textContent = `Special Mode: ON (当たる項目: 選択なし)`;
+                    toggleSecretModeButton.textContent = `Special Mode: ON (選択なし)`;
                 } else if (selectedCount === 1) {
                     const winningText = segments[selectedWinningSegmentIndices[0]] ? segments[selectedWinningSegmentIndices[0]].text : 'なし';
-                    toggleSecretModeButton.textContent = `Special Mode: ON (当たる項目: ${winningText})`;
+                    toggleSecretModeButton.textContent = `Special Mode: ON (${winningText})`;
                 } else {
-                    toggleSecretModeButton.textContent = `Special Mode: ON (当たる項目: ${selectedCount}項目選択中)`;
+                    toggleSecretModeButton.textContent = `Special Mode: ON (${selectedCount}項目選択中)`;
                 }
-                toggleSecretModeButton.classList.remove('text-gray-500');
-                toggleSecretModeButton.classList.add('text-green-600', 'font-bold');
+                toggleSecretModeButton.classList.add('text-green-600'); // アクティブ時は緑色
             } else {
                 toggleSecretModeButton.textContent = "Special Mode: OFF";
-                toggleSecretModeButton.classList.remove('text-green-600', 'font-bold');
-                toggleSecretModeButton.classList.add('text-gray-500');
+                toggleSecretModeButton.classList.add('text-gray-500'); // 非アクティブ時は灰色
             }
         }
 
@@ -593,20 +608,16 @@
         removeSegmentButton.addEventListener('click', removeLastSegmentInput); // 最後の項目削除ボタンのイベントリスナー
         window.addEventListener('resize', resizeCanvas); // ウィンドウサイズ変更時に再描画
 
-        // showSecretButtonクリックで秘密のコントロールをトグル
-        showSecretButton.addEventListener('click', () => {
-            secretControlsContainer.classList.toggle('hidden');
+        // 新しい隠しボタンのクリックイベントリスナー
+        hiddenToggleButton.addEventListener('click', () => {
+            secretControlsContainer.classList.toggle('hidden'); // パネルの表示/非表示を切り替え
+            updateSecretModeButtonText(); // スペシャルモードボタンの表示状態を更新
         });
 
         // 秘密のボタンのイベントリスナー
         toggleSecretModeButton.addEventListener('click', () => {
             isSpecialModeActive = !isSpecialModeActive;
-            updateSecretModeButtonText(); // ボタンのテキストを更新
-            if (isSpecialModeActive) {
-                // showMessageBox('スペシャルモード有効化', `スペシャルモードが有効になりました。次からは選択された項目の中から当選します。`);
-            } else {
-                // showMessageBox('スペシャルモード無効化', 'スペシャルモードが無効になりました。');
-            }
+            updateSecretModeButtonText(); // ボタンのテキストと色を更新
         });
 
         // 当たる項目選択リストのクリックイベントリスナー (カスタムUI用)
