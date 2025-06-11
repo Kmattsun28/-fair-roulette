@@ -105,6 +105,7 @@
             <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-[100%] -mt-2 w-0 h-0 border-l-[15px] border-l-transparent border-r-[15px] border-r-transparent border-b-[30px] border-b-red-600 z-10"></div>
         </div>
         <div class="flex space-x-4 mb-6">
+            <button id="showSecretButton" class="btn btn-secondary btn-small" style="background-color: #bfdbfe; color: #bfdbfe; border: none; min-width: 40px; min-height: 40px; padding: 0;">●</button>
             <button id="spinButton" class="btn btn-primary">回す</button>
             <button id="resetButton" class="btn btn-secondary">リセット</button>
         </div>
@@ -171,6 +172,7 @@
         const removeSegmentButton = document.getElementById('removeSegmentButton');
         const applySegmentsButton = document.getElementById('applySegmentsButton');
         const toggleSecretModeButton = document.getElementById('toggleSecretModeButton'); // 秘密のボタン
+        const showSecretButton = document.getElementById('showSecretButton');
         // 複数選択のためのカスタムコンテナ要素への参照
         const winningSegmentsOptionsContainer = document.getElementById('winningSegmentsOptionsContainer'); 
         const rouletteTitle = document.getElementById('rouletteTitle'); // タイトル要素
@@ -203,12 +205,6 @@
         let isSpecialModeActive = false; // スペシャルモードのフラグ
         // 複数選択を可能にするため、選択されたインデックスを配列で保持
         let selectedWinningSegmentIndices = []; 
-
-        // タイトルクリックによる秘密のコントロール表示/非表示のための変数
-        let titleClickCount = 0;
-        let lastTitleClickTime = 0;
-        const clickThreshold = 3;
-        const timeWindow = 2000; // 2 seconds
 
         // メッセージボックスを表示する関数 (エラー表示用)
         function showMessageBox(title, message) {
@@ -597,22 +593,9 @@
         removeSegmentButton.addEventListener('click', removeLastSegmentInput); // 最後の項目削除ボタンのイベントリスナー
         window.addEventListener('resize', resizeCanvas); // ウィンドウサイズ変更時に再描画
 
-        // タイトルクリックによる秘密のコントロール表示/非表示のイベントリスナー
-        const secretControlsContainer = document.getElementById('secretControlsContainer'); // 秘密のコントロールを格納するコンテナ
-        rouletteTitle.addEventListener('click', () => {
-            const currentTime = Date.now();
-            if (currentTime - lastTitleClickTime < timeWindow) {
-                titleClickCount++;
-            } else {
-                titleClick = 1; // タイムウィンドウを超えたらカウントをリセット
-            }
-            lastTitleClickTime = currentTime;
-
-            if (titleClickCount >= clickThreshold) {
-                secretControlsContainer.classList.toggle('hidden');
-                titleClickCount = 0; // トグル後にカウントをリセット
-                // showMessageBoxは呼び出さない
-            }
+        // showSecretButtonクリックで秘密のコントロールをトグル
+        showSecretButton.addEventListener('click', () => {
+            secretControlsContainer.classList.toggle('hidden');
         });
 
         // 秘密のボタンのイベントリスナー
